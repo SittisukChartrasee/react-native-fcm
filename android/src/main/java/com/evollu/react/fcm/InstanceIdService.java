@@ -4,16 +4,19 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v4.content.LocalBroadcastManager;
+//import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
+
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactInstanceManager;
 import com.facebook.react.bridge.ReactContext;
 import com.google.firebase.iid.FirebaseInstanceId;
-import com.google.firebase.iid.FirebaseInstanceIdService;
+//import com.google.firebase.iid.FirebaseInstanceIDSer;
+import com.google.firebase.messaging.FirebaseMessagingService;
 
-public class InstanceIdService extends FirebaseInstanceIdService {
+public class InstanceIdService extends FirebaseMessagingService {
 
     private static final String TAG = "InstanceIdService";
 
@@ -23,7 +26,7 @@ public class InstanceIdService extends FirebaseInstanceIdService {
      * InstanceID provider.
      */
     // [START refresh_token]
-    @Override
+//    @Override
     public void onTokenRefresh() {
         // Get updated InstanceID token.
         String refreshedToken = FirebaseInstanceId.getInstance().getToken();

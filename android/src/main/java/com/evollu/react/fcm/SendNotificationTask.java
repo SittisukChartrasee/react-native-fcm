@@ -1,6 +1,8 @@
 package com.evollu.react.fcm;
 
 import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -16,9 +18,10 @@ import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.LocalBroadcastManager;
+import androidx.core.app.NotificationCompat;
+
+import androidx.core.app.NotificationManagerCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.facebook.react.bridge.ReadableMap;
@@ -52,6 +55,17 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
     protected Void doInBackground(Void... params) {
         try {
             String intentClassName = getMainActivityClassName();
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                int importance = NotificationManager.IMPORTANCE_HIGH;
+                NotificationChannel channel = new NotificationChannel("my_channel_01", "comment", importance);
+//                channel.setDescription("sldkf");
+                NotificationManager notificationManager = mContext.getSystemService(NotificationManager.class);
+                notificationManager.createNotificationChannel(channel);
+            }
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(mContext, "my_channel_01");
+
+            Log.d("doinbackground -> ", intentClassName);
             if (intentClassName == null) {
                 return null;
             }
@@ -88,6 +102,29 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
                     .setSubText(subText)
                     .setVibrate(new long[]{0, DEFAULT_VIBRATION})
                     .setExtras(bundle.getBundle("data"));
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                notificationBuilder
+                        .setAutoCancel(true)
+                        .setDefaults(Notification.VISIBILITY_PRIVATE)
+                        .setWhen(System.currentTimeMillis())
+                        .setTicker(ticker)
+//                        .setPriority(Notification.PRIORITY_DEFAULT)
+                        .setContentTitle(title)
+                        .setContentText(body)
+                        .setContentInfo("Information");
+
+                String smallIcon_sub = bundle.getString("icon", "ic_launcher");
+                int smallIconResId_sub = res.getIdentifier(smallIcon_sub, "mipmap", packageName);
+                if(smallIconResId_sub == 0){
+                    smallIconResId_sub = res.getIdentifier(smallIcon_sub, "drawable", packageName);
+                }
+                if(smallIconResId_sub != 0){
+                    notificationBuilder.setSmallIcon(smallIconResId_sub);
+                }
+            }
+
+
 
             if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
                 String group = bundle.getString("group");
@@ -237,6 +274,8 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
                 LocalBroadcastManager.getInstance(mContext).sendBroadcast(i);
             }
 
+
+
             if(!mIsForeground || bundle.getBoolean("show_in_foreground")){
                 Intent intent = new Intent();
                 intent.setClassName(mContext, intentClassName);
@@ -249,6 +288,9 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
                 intent.setAction(clickAction);
 
                 int notificationID = bundle.containsKey("id") ? bundle.getString("id", "").hashCode() : (int) System.currentTimeMillis();
+
+                Log.d("notificationID", Integer.toString(notificationID));
+
                 PendingIntent pendingIntent = PendingIntent.getActivity(mContext, notificationID, intent,
                         PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -274,11 +316,18 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
 
                         notification.addAction(0, actionTitle, pendingActionIntent);
                     }
+
+
                 }
 
-                Notification info = notification.build();
 
+                Notification info = notification.build();
+                Log.d("Notification info", info.toString());
                 NotificationManagerCompat.from(mContext).notify(notificationID, info);
+
+                NotificationManagerCompat x = NotificationManagerCompat.from(mContext);
+                x.notify(notificationID, notificationBuilder.build());
+
             }
 
             if(bundle.getBoolean("wake_screen", false)){
@@ -289,6 +338,8 @@ public class SendNotificationTask extends AsyncTask<Void, Void, Void> {
                     wl.acquire(5000);
                 }
             }
+
+
 
             //clear out one time scheduled notification once fired
             if(!bundle.containsKey("repeat_interval") && bundle.containsKey("fire_date")) {
