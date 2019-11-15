@@ -471,7 +471,8 @@ RCT_EXPORT_METHOD(requestPermissions:(RCTPromiseResolveBlock)resolve rejecter:(R
         resolve(nil);
         return;
     }
-    if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_9_x_Max) {
+    // if (floor(NSFoundationVersionNumber) <= NSFoundationVersionNumber_iOS_9_x_Max) {
+    if ([UNUserNotificationCenter class] == nil) {
         UIUserNotificationType allNotificationTypes =
         (UIUserNotificationTypeSound | UIUserNotificationTypeAlert | UIUserNotificationTypeBadge);
         UIApplication *app = RCTSharedApplication();
@@ -484,22 +485,22 @@ RCT_EXPORT_METHOD(requestPermissions:(RCTPromiseResolveBlock)resolve rejecter:(R
         resolve(nil);
     } else {
         // iOS 10 or later
-#if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
+        // #if defined(__IPHONE_10_0) && __IPHONE_OS_VERSION_MAX_ALLOWED >= __IPHONE_10_0
         UNAuthorizationOptions authOptions =
         UNAuthorizationOptionAlert
         | UNAuthorizationOptionSound
         | UNAuthorizationOptionBadge;
         [[UNUserNotificationCenter currentNotificationCenter]
-         requestAuthorizationWithOptions:authOptions
-         completionHandler:^(BOOL granted, NSError * _Nullable error) {
-             if(granted){
-                 resolve(nil);
-             } else{
-                 reject(@"notification_error", @"Failed to grant permission", error);
-             }
-         }
-         ];
-#endif
+        requestAuthorizationWithOptions:authOptions
+        completionHandler:^(BOOL granted, NSError * _Nullable error) {
+            if(granted){
+                resolve(nil);
+            } else{
+                reject(@"notification_error", @"Failed to grant permission", error);
+            }
+        }
+        ];
+        // #endif
     }
     
     dispatch_async(dispatch_get_main_queue(), ^{
